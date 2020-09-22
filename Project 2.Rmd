@@ -1,0 +1,97 @@
+---
+title: "Project 2 DAT 514"
+author: "Cameron Farrugia"
+date: "4/22/2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ISLR)
+library(MASS)
+library(class)
+```
+
+Read in Data
+```{r}
+project<- read.csv("classif1.csv", header=FALSE)
+```
+
+
+## Logistic Regression
+```{r}
+glm.fits=glm(V5~., data=project, family=binomial)
+summary(glm.fits)
+```
+
+```{r}
+summary(glm.fits)$coef
+glm.probs=predict(glm.fits, type="response")
+glm.probs[1:10]
+```
+
+```{r}
+glm.pred=rep("No", 1372)
+glm.pred[glm.probs>.5]="Yes"
+table(glm.pred, project$V5)
+(604+757)/1372
+mean(glm.pred==project$V5)
+```
+
+
+
+
+## LDA
+
+```{r}
+set.seed(1)
+smp_size=floor(0.75*nrow(project))
+train_ind=sample(seq_len(nrow(project)), size=smp_size)
+train=project[train_ind,]
+test=project[-train_ind,]
+```
+
+
+```{r}
+lda.fit=lda(V5~., data=train)
+lda.fit
+```
+
+```{r}
+lda.pred=predict(lda.fit, test)
+lda.class=lda.pred$class
+table(lda.class, test$V5)
+mean(lda.class==test$V5)
+```
+
+96.20991% prediction power
+
+## QDA
+
+```{r}
+qda.fit=qda(V5~., data=train)
+qda.fit
+```
+
+```{r}
+qda.class=predict(qda.fit, test)$class
+table(qda.class, test$V5)
+mean(qda.class==test$V5)
+```
+
+
+97.95918% prediction power
+
+## KNN
+
+```{r}
+project$V5=as.factor(project$V5)
+summary(project$V5)
+```
+
+```{r}
+attach(project)
+train.X=cbind(V1, V2, V3, V4)[train,]
+test.X=cbind(V1, V2, V3, V4)[!train,]
+train.V5=V5[train]
+```

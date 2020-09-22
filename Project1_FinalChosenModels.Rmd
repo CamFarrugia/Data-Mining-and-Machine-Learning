@@ -1,0 +1,64 @@
+---
+title: "Project1_FinalChosenModels"
+author: "Liam McFall, Cam Farrugia, Erin Karnath"
+date: "4/9/2020"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Health Data Set
+
+```{r}
+
+library(readxl)
+library(tidyverse)
+library(magrittr)
+library(boot)
+library(randomForest)
+
+health <- read_xlsx("Health.xlsx")
+
+set.seed(3)
+rf.cv.fit <- randomForest(X1 ~ X4 + X5, data = health,
+                        importance =TRUE)
+
+rf.loocv <- cv.glm(health, rf.cv.fit)
+rf.loocv.error <- rf.loocv$delta[1]
+
+rf.loocv.error
+
+```
+
+The best model we came up with was a random forest using X4 and X5 as the predictors. It had a test MSE using LOOCV of 2.10 which was the lowest of all of the models that we tried with the health data set. We choose to use LOOCV when comparing the test errors of our models because it allowed us to use as much of the data in training the model as possible, due to this data set only being 53 observations. We did try using random subset and some k-fold cv as well, but the size of the training sets were too small, and resulted in much larger test errors.
+
+## Real Estate Dataset
+
+```{r}
+reales <- read_xlsx("Real estate.xlsx")
+
+set.seed(7)
+train <- sample(nrow(reales), nrow(reales) * .75)
+reales.train <- reales[train,]
+reales.test <- reales[-train,]
+
+
+rf.fit <- randomForest(Y ~ ., data = reales.train,importance =TRUE)
+
+rf.training.error <- mean((reales.train$Y - predict(rf.fit, reales.train, type = 'response')) ^ 2)
+
+rf.test.error <- mean((reales.test$Y - predict(rf.fit, reales.test, type = 'response')) ^ 2)
+
+rf.training.error
+rf.test.error
+
+
+
+```
+
+The best model we came up with is a random forest model using all the predictors. The test error of this method was 28.97314 which was the best we found even though it isn't very good. LOOCV wasn't a very good option for this dataset because it had a lot more data than the health one and therefor takes a considerable more time to complete. We tried using subset selection techniques to eliminate some varibles, but it turned out that the best model still included all the predictors. 

@@ -1,0 +1,417 @@
+---
+title: "Ch10 HW"
+author: "Cameron Farrugia"
+date: "4/15/2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Chapter 10
+
+#Lab 10.4 PCA
+
+```{r}
+states=row.names(USArrests)
+states
+names(USArrests)
+apply(USArrests, 2, mean)
+apply(USArrests,2 ,var)
+```
+```{r}
+pr.out=prcomp(USArrests, scale=TRUE)
+names(pr.out)
+pr.out$center
+pr.out$scale
+```
+
+```{r}
+pr.out$rotation
+```
+
+```{r}
+dim(pr.out$x)
+biplot(pr.out,scale=0)
+pr.out$rotation=-pr.out$rotation
+pr.out$x=-pr.out$x
+biplot(pr.out,scale=0)
+pr.out$sdev
+pr.var=pr.out$sdev^2
+pr.var
+pve=pr.var/sum(pr.var)
+pve
+```
+
+```{r}
+plot(pve, xlab="Principal Component", ylab="Proportion of Variance Explained", ylim=c(0,1), type='b')
+plot(cumsum(pve), xlab="Principal Componet", ylab="Cumulative Proportion of Variance Explained", ylim=c(0,1), type='b')
+```
+
+
+```{r}
+a=c(1,2,8,-3)
+cumsum(a)
+```
+
+#Lab 10.5 Clustering
+
+```{r}
+set.seed(2)
+x=matrix(rnorm(50*2), ncol=2)
+x[1:25,1]=x[1:25,1]+3
+x[1:25,2]=x[1:25,2]-4
+
+km.out=kmeans(x,2,nstart=20)
+km.out$cluster
+
+```
+
+```{r}
+plot(x,col=(km.out$cluster+1), main="K-means Clustering Results with K=2", xlab="", pch=20, cex=2)
+```
+
+```{r}
+set.seed(4)
+km.out=kmeans(x,3,nstart=20)
+km.out
+```
+
+```{r}
+plot(x, col=(km.out$cluster+1), main="K-Means Clustering Results with K=3", xlab="", ylab="", pch=20, cex=2)
+```
+
+```{r}
+set.seed(3)
+km.out=kmeans(x,3,nstart=1)
+km.out$tot.withinss
+km.out=kmeans(x,3,nstart=20)
+km.out$tot.withinss
+```
+#Hierarchical Clustering
+```{r}
+hc.complete=hclust(dist(x), method="complete")
+hc.average=hclust(dist(x), method="average")
+hc.single=hclust(dist(x), method="single")
+```
+
+```{r}
+par(mfrow=c(1,3))
+plot(hc.complete, main="Complete Linkage", xlab="", sub="", cex=.9)
+plot(hc.average, main="Average Linkage", xlab="", sub="", cex=.9)
+plot(hc.single, main="Single Linkage", xlab="", sub="", cex=.9)
+```
+
+```{r}
+cutree(hc.complete, 2)
+cutree(hc.average, 2)
+cutree(hc.single, 2)
+cutree(hc.single, 4)
+```
+
+```{r}
+xsc=scale(x)
+plot(hclust(dist(xsc), method="complete"), main="Hierarchical Clustering with Scaled Features")
+
+```
+
+```{r}
+x=matrix(rnorm(30*3), ncol=3)
+dd=as.dist(1-cor(t(x)))
+plot(hclust(dd, method="complete"), main="Complete Linkage with Correlation-Based Distance", xlab="", sub="")
+```
+
+# Lab 10.6 NCI60
+
+```{r}
+library(ISLR)
+nci.labs=NCI60$labs
+nci.data=NCI60$data
+```
+
+```{r}
+dim(nci.data)
+nci.labs[1:4]
+table(nci.labs)
+```
+
+PCA on NCI60
+
+```{r}
+pr.out=prcomp(nci.data, scale=TRUE)
+Cols=function(vec){
+  cols=rainbow(length(unique(vec)))
+  return(cols[as.numeric(as.factor(vec))])
+}
+
+par(mfrow=c(1,2))
+plot(pr.out$x[,1:2], col=Cols(nci.labs), pch=19, xlab="Z1", ylab="Z3")
+```
+
+```{r}
+summary(pr.out)
+plot(pr.out)
+```
+
+```{r}
+pve=100*pr.out$sdev^2/sum(pr.out$sdev^2)
+par(mfrow=c(1,2))
+plot(pve, type="o", ylab="PVE", xlab="Principal Component", col="blue")
+plot(cumsum(pve), type="o", ylab="Cumulative PVE", xlab="Principal Component", col="brown3")
+
+```
+
+```{r}
+sd.data=scale(nci.data)
+par(mfrow=c(1,3))
+data.dist=dist(sd.data)
+plot(hclust(data.dist), labels=nci.labs, main="Complete Linkage", xlab="", ylab="")
+plot(hclust(data.dist, method="average"), labels=nci.labs, main="Average Linkage", xlab="", sub="", ylab="")
+plot(hclust(data.dist, method="single"), labels=nci.labs, main="Single Linkage", xlab="", sub="", ylab="")
+```
+
+```{r}
+hc.out=hclust(dist(sd.data))
+hc.clusters=cutree(hc.out, 4)
+table(hc.clusters, nci.labs)
+
+par(mfrow=c(1,1))
+plot(hc.out, labels=nci.labs)
+abline(h=139, col="red")
+hc.out
+
+```
+
+```{r}
+set.seed(2)
+km.out=kmeans(sd.data, 4, nstart=20)
+km.clusters=km.out$cluster
+table(km.clusters, hc.clusters)
+```
+
+```{r}
+hc.out=hclust(dist(pr.out$x[,1:5]))
+plot(hc.out, labels=nci.labs, main="Hier. Clust. on First Five Score Vectors")
+table(cutree(hc.out, 4), nci.labs)
+```
+
+#2,3,4,7,8,9,11 
+
+#2
+
+a)
+```{r}
+d = as.dist(matrix(c(0, 0.3, 0.4, 0.7, 
+                     0.3, 0, 0.5, 0.8,
+                     0.4, 0.5, 0.0, 0.45,
+                     0.7, 0.8, 0.45, 0.0), nrow=4))
+plot(hclust(d, method="complete"))
+
+```
+
+b)
+```{r}
+plot(hclust(d, method="single"))
+
+```
+
+c)
+(1,2), (3,4)
+
+d)
+(1,2,3), (4)
+
+e)
+```{r}
+plot(hclust(d, method="complete"), labels=c(2,1,4,3))
+```
+
+
+#3
+
+```{r}
+set.seed(1)
+x = cbind(c(1, 1, 0, 5, 6, 4), c(4, 3, 4, 1, 2, 0))
+K=2
+```
+
+a)
+
+```{r}
+plot(x[,1], x[,2])
+```
+
+b)
+```{r}
+labels = sample(2, nrow(x), replace=T)
+labels
+```
+
+c)
+```{r}
+centroid1 = c(mean(x[labels=1, 1]), mean(x[labels=1, 2]))
+centroid2 = c(mean(x[labels=2, 1]), mean(x[labels=2, 2]))
+centroid1
+centroid2
+```
+
+d)
+```{r}
+euclid = function(a, b) {
+  return(sqrt((a[1] - b[1])^2 + (a[2]-b[2])^2))
+}
+assign_labels = function(x, centroid1, centroid2) {
+  labels = rep(NA, nrow(x))
+  for (i in 1:nrow(x)) {
+    if (euclid(x[i,], centroid1) < euclid(x[i,], centroid2)) {
+      labels[i] = 1
+    } else {
+      labels[i] = 2
+    }
+  }
+  return(labels)
+}
+labels = assign_labels(x, centroid1, centroid2)
+labels
+```
+
+e)
+```{r}
+last_labels = rep(-1, 6)
+while (!all(last_labels == labels)) {
+  last_labels = labels
+  centroid1 = c(mean(x[labels==1, 1]), mean(x[labels==1, 2]))
+  centroid2 = c(mean(x[labels==2, 1]), mean(x[labels==2, 2]))
+  print(centroid1)
+  print(centroid2)
+  labels = assign_labels(x, centroid1, centroid2)
+}
+labels
+```
+
+f)
+```{r}
+plot(x[,1], x[,2], col=(labels+1), pch=20, cex=2)
+points(centroid1[1], centroid1[2], col=2, pch=4)
+points(centroid2[1], centroid2[2], col=3, pch=4)
+```
+
+#4
+
+a)
+There is not enough information to tell. We would need to know the maximal intercluster dissimilarities in order to tell. 
+
+b)
+They would fuse at the same height for both both dendograms because linkage doesn't affect single leaf fusion.
+
+#7
+
+```{r}
+library(ISLR)
+set.seed(1)
+```
+
+```{r}
+dsc = scale(USArrests)
+a = dist(dsc)^2
+b = as.dist(1 - cor(t(dsc)))
+summary(b/a)
+```
+
+#8
+
+a)
+```{r}
+pr.out = prcomp(USArrests, center=T, scale=T)
+pr.var = pr.out$sdev^2
+pve = pr.var / sum(pr.var)
+pve
+```
+
+
+b)
+```{r}
+loadings = pr.out$rotation
+pve2 = rep(NA, 4)
+dmean = apply(USArrests, 2, mean)
+dsdev = sqrt(apply(USArrests, 2, var))
+dsc = sweep(USArrests, MARGIN=2, dmean, "-")
+dsc = sweep(dsc, MARGIN=2, dsdev, "/")
+for (i in 1:4) {
+  proto_x = sweep(dsc, MARGIN=2, loadings[,i], "*")
+  pc_x = apply(proto_x, 1, sum)
+  pve2[i] = sum(pc_x^2)
+}
+pve2 = pve2/sum(dsc^2)
+pve2
+```
+
+
+#9
+
+a)
+```{r}
+hc.complete = hclust(dist(USArrests), method="complete")
+plot(hc.complete)
+```
+
+b)
+```{r}
+cutree(hc.complete, 3)
+table(cutree(hc.complete, 3))
+```
+
+c)
+```{r}
+dsc = scale(USArrests)
+hc.s.complete = hclust(dist(dsc), method="complete")
+plot(hc.s.complete)
+```
+
+d)
+```{r}
+cutree(hc.s.complete, 3)
+table(cutree(hc.s.complete, 3))
+```
+
+```{r}
+table(cutree(hc.s.complete, 3), cutree(hc.complete, 3))
+```
+By scaling the varibles you change the max height of the dendograms in hierarchical clustering. It changes the which clusters the leaves fall into. If the data has different units then yes it is important to scale the varibles.
+
+#11
+
+a)
+```{r}
+data = read.csv("./Ch10Ex11.csv", header=F)
+dim(data)
+```
+
+
+b)
+```{r}
+dd = as.dist(1 - cor(data))
+plot(hclust(dd, method="complete"))
+plot(hclust(dd, method="single"))
+plot(hclust(dd, method="average"))
+```
+For the most part the seperate into two groups, but it depends on the method. 
+
+c)
+
+We can use PCA to see which genes differ the most based on the weight of the abs of total loadings
+
+```{r}
+pr.out <- prcomp(t(data))
+head(pr.out$rotation)
+```
+
+```{r}
+total.load <- apply(pr.out$rotation, 1, sum)
+index <- order(abs(total.load), decreasing = TRUE)
+index[1:5]
+```
+
+these are the 5 genes that differ the most.
