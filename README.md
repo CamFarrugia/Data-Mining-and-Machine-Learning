@@ -7,6 +7,6 @@ Project 1 Final Chosen models is a document showing which type of model I chose 
 
 Project 1 uses the datasets Health and Real Estate.
 
-Project 2 we were given a set of data that we knew nothing about and had to see if had high prediction power based on the varibles using Logistic Regression, LDA, QDA and KNN.
+Project 2 we were given a set of data that we knew nothing about and had to see if it had high prediction power based on the varibles using Logistic Regression, LDA, QDA and KNN.
 
 Project 2 uses the dataset classif1.
